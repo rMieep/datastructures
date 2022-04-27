@@ -5,15 +5,15 @@ import java.lang.reflect.Field;
 
 public class FenwickTreeTests extends PrefixSumArrayTests {
     @Override
-    protected PrefixSumArray createInstance() {
-        return new FenwickTree(this.array);
+    protected PrefixSumArray createInstance(int[] array) {
+        return new FenwickTree(array);
     }
 
     @Test
     @Override
     public void testPrefixSumArrayUpdateValue() throws NoSuchFieldException, IllegalAccessException {
-        PrefixSumArray ds = createInstance();
-        ds.updatePoint(4, 5, 7);
+        PrefixSumArray ds = createInstance(PrefixSumArrayTests.VALID_ARRAY);
+        ds.updatePoint(4, 7);
         Field privateFenwickArrayField = ds.getClass().getDeclaredField("fenwickArray");
         privateFenwickArrayField.setAccessible(true);
         int[] fenwickArray = (int[]) privateFenwickArrayField.get(ds);

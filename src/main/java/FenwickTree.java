@@ -3,34 +3,52 @@ public class FenwickTree implements PrefixSumArray {
     private final int[] fenwickArray;
 
     public FenwickTree(int[] array) {
+        if(array == null) {
+            throw new IllegalArgumentException("array=null");
+        }
+
+        if(array.length == 0) {
+            throw new IllegalArgumentException("array.length=0");
+        }
+
         this.fenwickArray = new int[array.length + 1];
         buildTree(array);
     }
 
-    private void buildTree(int[] array) {
-        for(int i = 1; i < this.fenwickArray.length; i++) {
-            int responsibility = calculateResponsibility(i);
-            int sum = 0;
-            for(int j = i; j > i - responsibility; j--) {
-                sum += array[j - 1];
-            }
-            this.fenwickArray[i] = sum;
+    @Override
+    public int rangeQuery(int from, int to) {
+        if(from > to) {
+            throw new IllegalArgumentException(String.format("from=%s, to=%s", from, to));
         }
-    }
-
-    private int calculateResponsibility(int number) {
-        return (int) Math.pow(2, calculateLSB(number));
-    }
-
-    private int calculateLSB(int number) {
-        int b = number - 1;
-        int c = number | b;
-        return (int)(Math.log(c ^ b) / Math.log(2));
+        return calculatePrefixSum(to + 1) - calculatePrefixSum(from);
     }
 
     @Override
-    public int rangeQuery(int from, int to) {
-        return calculatePrefixSum(to + 1) - calculatePrefixSum(from);
+    public void updatePoint(int index, int value) {
+        if(index < 0 || index > this.fenwickArray.length - 2) {
+            throw new IllegalArgumentException(String.format(
+                    "index=%s, array.length=%s", index, this.fenwickArray.length - 1));
+        }
+
+        int difference = value - rangeQuery(index, index);
+        index = index + 1;
+
+        while(index < this.fenwickArray.length) {
+            this.fenwickArray[index] += difference;
+            index += calculateLSB(index);
+        }
+    }
+
+    private void buildTree(int[] array) {
+        int n = fenwickArray.length;
+        for (int i = 1; i < n; i++) {
+            this.fenwickArray[i] += array[i - 1];
+            int parent = i + calculateLSB(i);
+
+            if(parent < n) {
+                this.fenwickArray[parent] += this.fenwickArray[i];
+            }
+        }
     }
 
     private int calculatePrefixSum(int index) {
@@ -38,20 +56,13 @@ public class FenwickTree implements PrefixSumArray {
 
         while(index > 0) {
             sum += this.fenwickArray[index];
-            index -= calculateResponsibility(index);
+            index -= calculateLSB(index);
         }
 
         return sum;
     }
 
-    @Override
-    public void updatePoint(int index, int oldValue, int newValue) {
-        int difference = newValue - oldValue;
-        index = index + 1;
-
-        while(index < this.fenwickArray.length) {
-            this.fenwickArray[index] += difference;
-            index += calculateResponsibility(index);
-        }
+    private int calculateLSB(int number) {
+        return number & -number;
     }
 }
